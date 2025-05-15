@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Details - BargainBuddy</title>
+  <script src="https://cdn.tailwindcss.com/3.3.2"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #1e1e1e, #121212);
+      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+    }
+    .glassmorphism {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+    }
+    .hover-scale {
+      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .hover-scale:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .slide-in-left {
+      animation: slideInLeft 0.5s ease-in-out;
+    }
+    @keyframes slideInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    .slide-in-right {
+      animation: slideInRight 0.5s ease-in-out;
+    }
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+  <!-- Navbar -->
+  <nav class="glassmorphism p-4 flex justify-between items-center mx-6 mt-4 rounded-lg fade-in">
+    <!-- Logo -->
+    <a href="{{ url_for('home') }}" class="flex items-center space-x-2 hover-scale">
+      <img src="../static/images/icon-logo-base0.svg" alt="Logo" class="w-8 h-8">
+      <span class="text-xl font-bold text-yellow-400">BargainBuddy</span>
+    </a>
+
+   
+
+    <!-- User Actions -->
+    <div class="flex items-center space-x-4 slide-in-right">
+      <button
+        class="bg-yellow-400 text-gray-900 py-2 px-4 rounded-lg hover:bg-yellow-500 hover-scale transition-all duration-300"
+        onclick="alert('Cart clicked!')"
+      >
+        Cart
+      </button>
+      <button
+        class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 hover-scale transition-all duration-300"
+        onclick="alert('Become a seller!')"
+      >
+        Become a Seller
+      </button>
+      <img src="../static/images/group-42510.svg" alt="User Avatar" class="w-10 h-10 rounded-full hover-scale transition-all duration-300" />
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="flex flex-1 mx-6 my-4 space-x-6">
+    <!-- Sidebar -->
+    <aside class="w-64 glassmorphism p-4 rounded-lg slide-in-left">
+      <ul class="space-y-3">
+        <li>
+          <a
+            href="{{ url_for('home') }}"
+            class="flex items-center space-x-3 text-white py-2 px-4 rounded-lg hover:bg-yellow-400 hover:text-gray-900 transition-all duration-300"
+          >
+            <img src="../static/images/group-42500.svg" alt="Home Icon" class="w-5 h-5" />
+            <span>Home</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Product Details -->
+    <main class="flex-1 glassmorphism p-8 rounded-lg fade-in">
+      <h1 class="text-3xl font-bold text-yellow-400 mb-6">Product Details</h1>
+      <div class="flex space-x-8">
+        <!-- Product Image -->
+        <div class="w-1/2 slide-in-left">
+          {% if product.image_filename %}
+            <img
+              src="{{ url_for('static', filename='uploads/' + product.image_filename) }}"
+              alt="{{ product.title }}"
+              class="w-full h-96 object-cover rounded-lg hover-scale transition-all duration-300"
+            />
+          {% endif %}
+        </div>
+
+        <!-- Product Info -->
+        <div class="w-1/2 space-y-6 slide-in-right">
+          <h2 class="text-2xl font-bold text-white">{{ product.title }}</h2>
+          <p class="text-4xl font-bold text-yellow-400">{{ product.price }} Rs.</p>
+          <div class="space-y-4">
+            <p class="text-white"><span class="font-bold">Inventory:</span> {{ product.inventory }}</p>
+            <p class="text-white"><span class="font-bold">Expiry Year:</span> {{ product.expiry_year }}</p>
+            <p class="text-white"><span class="font-bold">Predicted Discount:</span> {{ predicted_discount }} Rs</p>
+          </div>
+          <div class="flex space-x-4">
+            <button
+              class="bg-green-500 text-white py-2 px-6 rounded-lg hover:bg-green-600 hover-scale transition-all duration-300"
+              onclick="alert('Added to Cart!')"
+            >
+              Add to Cart
+            </button>
+            <button
+              class="bg-orange-500 text-white py-2 px-6 rounded-lg hover:bg-orange-600 hover-scale transition-all duration-300"
+              onclick="window.location.href='{{ url_for('home') }}'"
+            >
+              Back to Products
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
