@@ -1,157 +1,312 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Product Details - BargainBuddy</title>
-  <script src="https://cdn.tailwindcss.com/3.3.2"></script>
-  <style>
-    body {
-      background: linear-gradient(135deg, #1e1e1e, #121212);
-      color: #f8fafc;
-      font-family: 'Inter', sans-serif;
-    }
-    .glassmorphism {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-    }
-    .hover-scale {
-      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    }
-    .hover-scale:hover {
-      transform: scale(1.05);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    }
-    .fade-in {
-      animation: fadeIn 0.5s ease-in-out;
-    }
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    .slide-in-left {
-      animation: slideInLeft 0.5s ease-in-out;
-    }
-    @keyframes slideInLeft {
-      from {
-        opacity: 0;
-        transform: translateX(-20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-    .slide-in-right {
-      animation: slideInRight 0.5s ease-in-out;
-    }
-    @keyframes slideInRight {
-      from {
-        opacity: 0;
-        transform: translateX(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-  </style>
-</head>
-<body class="min-h-screen flex flex-col">
-  <!-- Navbar -->
-  <nav class="glassmorphism p-4 flex justify-between items-center mx-6 mt-4 rounded-lg fade-in">
-    <!-- Logo -->
-    <a href="{{ url_for('home') }}" class="flex items-center space-x-2 hover-scale">
-      <img src="../static/images/icon-logo-base0.svg" alt="Logo" class="w-8 h-8">
-      <span class="text-xl font-bold text-yellow-400">BargainBuddy</span>
-    </a>
-
-   
-
-    <!-- User Actions -->
-    <div class="flex items-center space-x-4 slide-in-right">
-      <button
-        class="bg-yellow-400 text-gray-900 py-2 px-4 rounded-lg hover:bg-yellow-500 hover-scale transition-all duration-300"
-        onclick="alert('Cart clicked!')"
-      >
-        Cart
-      </button>
-      <button
-        class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 hover-scale transition-all duration-300"
-        onclick="alert('Become a seller!')"
-      >
-        Become a Seller
-      </button>
-      <img src="../static/images/group-42510.svg" alt="User Avatar" class="w-10 h-10 rounded-full hover-scale transition-all duration-300" />
-    </div>
+{% extends 'base.html' %}
+{% block title %}{{ product.title }} | BargainBuddy{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Breadcrumb -->
+  <nav class="flex mb-6" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+      <li class="inline-flex items-center">
+        <a href="{{ url_for('home') }}" class="text-gray-700 hover:text-yellow-500">
+          <i class="fas fa-home mr-1"></i> Home
+        </a>
+      </li>
+      <li>
+        <div class="flex items-center">
+          <i class="fas fa-chevron-right text-gray-400 mx-2 text-sm"></i>
+          <a href="#" class="text-gray-700 hover:text-yellow-500">Shop</a>
+        </div>
+      </li>
+      <li>
+        <div class="flex items-center">
+          <i class="fas fa-chevron-right text-gray-400 mx-2 text-sm"></i>
+          <span class="text-gray-500">{{ product.title }}</span>
+        </div>
+      </li>
+    </ol>
   </nav>
 
-  <!-- Main Content -->
-  <div class="flex flex-1 mx-6 my-4 space-x-6">
-    <!-- Sidebar -->
-    <aside class="w-64 glassmorphism p-4 rounded-lg slide-in-left">
-      <ul class="space-y-3">
-        <li>
-          <a
-            href="{{ url_for('home') }}"
-            class="flex items-center space-x-3 text-white py-2 px-4 rounded-lg hover:bg-yellow-400 hover:text-gray-900 transition-all duration-300"
-          >
-            <img src="../static/images/group-42500.svg" alt="Home Icon" class="w-5 h-5" />
-            <span>Home</span>
-          </a>
-        </li>
-      </ul>
-    </aside>
-
-    <!-- Product Details -->
-    <main class="flex-1 glassmorphism p-8 rounded-lg fade-in">
-      <h1 class="text-3xl font-bold text-yellow-400 mb-6">Product Details</h1>
-      <div class="flex space-x-8">
-        <!-- Product Image -->
-        <div class="w-1/2 slide-in-left">
-          {% if product.image_filename %}
-            <img
-              src="{{ url_for('static', filename='uploads/' + product.image_filename) }}"
-              alt="{{ product.title }}"
-              class="w-full h-96 object-cover rounded-lg hover-scale transition-all duration-300"
-            />
-          {% endif %}
+  <!-- Product Detail -->
+  <div class="bg-white rounded-xl shadow-lg overflow-hidden p-6 mb-10">
+    <div class="flex flex-col md:flex-row gap-8">
+      <!-- Image Gallery -->
+      <div class="md:w-2/5">
+        <div class="mb-4">
+          <img src="{{ url_for('static', filename='uploads/' + (product.image_filename or 'default.png')) }}" 
+               alt="{{ product.title }}" 
+               class="w-full h-96 object-cover rounded-lg border">
         </div>
-
-        <!-- Product Info -->
-        <div class="w-1/2 space-y-6 slide-in-right">
-          <h2 class="text-2xl font-bold text-white">{{ product.title }}</h2>
-          <p class="text-4xl font-bold text-yellow-400">{{ product.price }} Rs.</p>
-          <div class="space-y-4">
-            <p class="text-white"><span class="font-bold">Inventory:</span> {{ product.inventory }}</p>
-            <p class="text-white"><span class="font-bold">Expiry Year:</span> {{ product.expiry_year }}</p>
-            <p class="text-white"><span class="font-bold">Predicted Discount:</span> {{ predicted_discount }} Rs</p>
+      </div>
+      
+      <!-- Product Info -->
+      <div class="md:w-3/5">
+        <h1 class="text-3xl font-bold mb-2">{{ product.title }}</h1>
+        
+        <!-- Price -->
+        <div class="mb-6">
+          <div class="flex items-center">
+            <span class="text-3xl font-bold text-yellow-600">${{ '%.2f'|format(product.price) }}</span>
+            {% if product.max_discount > 0 %}
+            <span class="ml-3 text-sm bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Max discount: ${{ '%.2f'|format(product.max_discount) }}</span>
+            {% endif %}
           </div>
+        </div>
+        
+        <!-- Availability -->
+        <div class="mb-6">
+          <div id="availability-status">
+            {% if product.inventory > 10 %}
+              <div class="flex items-center text-green-600">
+                <i class="fas fa-check-circle mr-2"></i>
+                <span>In Stock ({{ product.inventory }} available)</span>
+              </div>
+            {% elif product.inventory > 0 %}
+              <div class="flex items-center text-orange-600">
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                <span>Low Stock! Only {{ product.inventory }} left</span>
+              </div>
+            {% else %}
+              <div class="flex items-center text-red-600">
+                <i class="fas fa-times-circle mr-2"></i>
+                <span>Out of Stock</span>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        
+        <!-- Description -->
+        <div class="mb-6">
+          <h3 class="text-lg font-semibold mb-2">Description</h3>
+          <p class="text-gray-600">{{ product.description or 'No description available for this product.' }}</p>
+        </div>
+        
+        <!-- Details -->
+        <div class="mb-6">
+          <h3 class="text-lg font-semibold mb-2">Details</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="flex items-start">
+              <i class="fas fa-calendar-alt text-gray-500 mt-1 mr-2"></i>
+              <div>
+                <p class="text-sm text-gray-500">Expiry Year</p>
+                <p class="font-medium">{{ product.expiry_year }}</p>
+              </div>
+            </div>
+            <div class="flex items-start">
+              <i class="fas fa-tag text-gray-500 mt-1 mr-2"></i>
+              <div>
+                <p class="text-sm text-gray-500">Max Discount</p>
+                <p class="font-medium">${{ '%.2f'|format(product.max_discount) }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Add to Cart Form -->
+        {% if current_user.is_authenticated and not current_user.is_admin %}
+          <form id="addToCartForm" class="mb-6">
+            <div class="flex items-center mb-4">
+              <div class="mr-4">
+                <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                <div class="custom-number-input h-10 w-32">
+                  <div class="flex flex-row h-10 w-full rounded-lg relative bg-transparent">
+                    <button type="button" data-action="decrement" class="bg-gray-100 text-gray-600 hover:text-gray-700 hover:bg-gray-200 h-full w-10 rounded-l cursor-pointer">
+                      <span class="m-auto text-xl">−</span>
+                    </button>
+                    <input type="number" id="quantity" name="quantity" 
+                           class="outline-none focus:outline-none text-center w-full bg-gray-100 font-semibold text-md hover:text-black focus:text-black md:text-base cursor-default flex items-center text-gray-700"
+                           min="1" max="{{ product.inventory }}" value="1" required {% if product.inventory <= 0 %}disabled{% endif %}>
+                    <button type="button" data-action="increment" class="bg-gray-100 text-gray-600 hover:text-gray-700 hover:bg-gray-200 h-full w-10 rounded-r cursor-pointer">
+                      <span class="m-auto text-xl">+</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Bargain or Add to Cart button -->
+              <div class="flex-1">
+                <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 px-4 rounded-lg flex items-center justify-center" {% if product.inventory <= 0 %}disabled class="opacity-50 cursor-not-allowed"{% endif %}>
+                  <i class="fas fa-shopping-cart mr-2"></i>
+                  {% if product.inventory <= 0 %}Out of Stock{% else %}Add to Cart{% endif %}
+                </button>
+                
+                <a href="{{ url_for('chat_bot', product_id=product.id) }}" class="w-full mt-2 bg-white hover:bg-gray-100 text-yellow-600 border border-yellow-500 font-bold py-3 px-4 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-comments mr-2"></i> Bargain Now
+                </a>
+              </div>
+            </div>
+          </form>
+        {% endif %}
+        
+        <!-- Share -->
+        <div class="border-t pt-4">
+          <p class="text-gray-600 mb-2">Share this product:</p>
           <div class="flex space-x-4">
-            <button
-              class="bg-green-500 text-white py-2 px-6 rounded-lg hover:bg-green-600 hover-scale transition-all duration-300"
-              onclick="alert('Added to Cart!')"
-            >
-              Add to Cart
-            </button>
-            <button
-              class="bg-orange-500 text-white py-2 px-6 rounded-lg hover:bg-orange-600 hover-scale transition-all duration-300"
-              onclick="window.location.href='{{ url_for('home') }}'"
-            >
-              Back to Products
-            </button>
+            <a href="#" class="text-blue-600 hover:text-blue-800"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" class="text-blue-400 hover:text-blue-600"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="text-red-600 hover:text-red-800"><i class="fab fa-pinterest"></i></a>
+            <a href="#" class="text-green-600 hover:text-green-800"><i class="fab fa-whatsapp"></i></a>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   </div>
-</body>
-</html>
+  
+  <!-- Related Products -->
+  <div class="mb-10">
+    <h2 class="text-2xl font-bold mb-6">You Might Also Like</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+      {% for related_product in related_products %}
+        <div class="bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden flex flex-col">
+          <a href="{{ url_for('product_page', product_id=related_product.id) }}" class="relative">
+            <img src="{{ url_for('static', filename='uploads/' + (related_product.image_filename or 'default.png')) }}" 
+                 alt="{{ related_product.title }}" 
+                 class="h-48 w-full object-cover">
+          </a>
+          <div class="p-4 flex-1 flex flex-col">
+            <h3 class="font-semibold text-lg mb-2 truncate">{{ related_product.title }}</h3>
+            <p class="text-gray-500 mb-4 line-clamp-2">{{ related_product.description }}</p>
+            <div class="mt-auto flex justify-between items-center">
+              <span class="text-yellow-600 font-bold text-xl">${{ '%.2f'|format(related_product.price) }}</span>
+              <a href="{{ url_for('product_page', product_id=related_product.id) }}" 
+                 class="bg-yellow-500 text-black px-4 py-2 rounded-lg font-semibold hover:bg-yellow-400">
+                View
+              </a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Success notification -->
+<div id="notification" class="fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded z-50 hidden">
+  <div class="flex items-center">
+    <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+    </svg>
+    <span>Product added to cart!</span>
+  </div>
+</div>
+
+{% if current_user.is_authenticated and not current_user.is_admin %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('addToCartForm');
+  const notification = document.getElementById('notification');
+  const quantityInput = document.getElementById('quantity');
+  const addToCartBtn = form.querySelector('button[type="submit"]');
+  const notificationText = notification.querySelector('span');
+  const notificationIcon = notification.querySelector('svg');
+
+  // Quantity increment/decrement
+  form.querySelectorAll('[data-action]').forEach(button => {
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
+      const action = button.dataset.action;
+      const qty = parseInt(quantityInput.value);
+      if (action === 'increment' && qty < parseInt(quantityInput.max)) {
+        quantityInput.value = qty + 1;
+      } else if (action === 'decrement' && qty > 1) {
+        quantityInput.value = qty - 1;
+      }
+    });
+  });
+
+  // Add to cart submission
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // Disable button while processing
+    addToCartBtn.disabled = true;
+    const originalBtnHtml = addToCartBtn.innerHTML;
+    addToCartBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Adding...';
+    
+    const productId = "{{ product.id }}";
+    const quantity = parseInt(quantityInput.value);
+    
+    try {
+      const response = await fetch('/api/cart/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          product_id: productId,
+          quantity: quantity
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        // Update cart count in navbar
+        const cartCountElements = document.querySelectorAll('.cart-count');
+        cartCountElements.forEach(element => {
+          element.textContent = data.cart_count;
+        });
+        
+        // Update inventory display
+        const newInventory = data.inventory;
+        const inventoryText = newInventory > 10 
+          ? `<div class='flex items-center text-green-600'><i class='fas fa-check-circle mr-2'></i><span>In Stock (${newInventory} available)</span></div>`
+          : newInventory > 0 
+            ? `<div class='flex items-center text-orange-600'><i class='fas fa-exclamation-circle mr-2'></i><span>Low Stock! Only ${newInventory} left</span></div>`
+            : `<div class='flex items-center text-red-600'><i class='fas fa-times-circle mr-2'></i><span>Out of Stock</span></div>`;
+        const availabilityDiv = document.getElementById('availability-status');
+        if (availabilityDiv) {
+          availabilityDiv.innerHTML = inventoryText;
+        }
+        
+        // Update quantity input max
+        quantityInput.max = newInventory;
+        if (parseInt(quantityInput.value) > newInventory) {
+          quantityInput.value = newInventory;
+        }
+        
+        // Show success notification
+        notification.classList.remove('bg-red-100', 'border-red-400', 'text-red-700');
+        notification.classList.add('bg-green-100', 'border-green-400', 'text-green-700');
+        notificationText.textContent = 'Product added to cart!';
+        notification.classList.remove('hidden');
+        
+        // Update button state based on new inventory
+        if (newInventory <= 0) {
+          addToCartBtn.disabled = true;
+          addToCartBtn.classList.add('opacity-50', 'cursor-not-allowed');
+          addToCartBtn.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Out of Stock';
+        } else {
+          addToCartBtn.disabled = false;
+          addToCartBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+          addToCartBtn.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i>Add to Cart';
+        }
+        
+        // Reload the page after a short delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 700);
+      } else {
+        throw new Error(data.error || 'Error adding to cart');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      // Show error notification
+      notification.classList.remove('bg-green-100', 'border-green-400', 'text-green-700');
+      notification.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
+      notificationText.textContent = error.message;
+      notification.classList.remove('hidden');
+      
+      // Reset button to original state
+      addToCartBtn.disabled = false;
+      addToCartBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      addToCartBtn.innerHTML = originalBtnHtml;
+    }
+    
+    // Hide notification after delay
+    setTimeout(() => {
+      notification.classList.add('hidden');
+    }, 3000);
+  });
+});
+</script>
+{% endif %}
+{% endblock %}

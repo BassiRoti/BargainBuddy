@@ -1,216 +1,138 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Add Product</title>
-  <script src="https://cdn.tailwindcss.com/3.3.2"></script>
-  <style>
-    body {
-      background: linear-gradient(135deg, #1e1e1e, #121212);
-      color: #f8fafc;
-      font-family: 'Inter', sans-serif;
-      display: flex;
-    }
+{% extends 'base.html' %}
+{% block title %}Add Product - BargainBuddy{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+            <h1 class="text-2xl font-semibold text-gray-800">Add New Product</h1>
+            <p class="text-gray-500 mt-1">Fill in the details below to add a new product to the store.</p>
+        </div>
 
-    .sidebar {
-      width: 250px;
-      background-color: #2a2a2a;
-      height: 100vh;
-      position: fixed;
-      top: 0;
-      left: -250px;
-      padding: 1rem;
-      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease;
-    }
+        <form action="{{ url_for('add_product') }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-6">
+            <!-- Title -->
+            <div>
+                <label for="title" class="block text-sm font-medium text-gray-700">Product Title</label>
+                <input type="text" id="title" name="title" required
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
+            </div>
 
-    .sidebar.open {
-      transform: translateX(250px);
-    }
+            <!-- Description -->
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700">Product Description</label>
+                <textarea id="description" name="description" rows="4" required
+                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
+                          placeholder="Enter a detailed description of your product..."></textarea>
+            </div>
 
-    .sidebar ul {
-      list-style: none;
-      padding: 0;
-    }
+            <!-- Category -->
+            <div>
+                <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+                <select id="category" name="category"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
+                    <option value="">Select an existing category</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}">{{ cat }}</option>
+                    {% endfor %}
+                </select>
+                
+                <p class="mt-4 text-sm font-medium text-gray-700">Or add a new one:</p>
+                <input type="text" id="new_category" name="new_category" placeholder="Type new category name here"
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
+            </div>
 
-    .sidebar ul li {
-      margin: 1rem 0;
-    }
+            <!-- Price -->
+            <div>
+                <label for="price" class="block text-sm font-medium text-gray-700">Price ($)</label>
+                <input type="number" id="price" name="price" min="0.01" step="0.01" required
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
+            </div>
 
-    .sidebar ul li a {
-      text-decoration: none;
-      color: #f8fafc;
-      padding: 0.5rem 1rem;
-      display: block;
-      border-radius: 0.375rem;
-      transition: background-color 0.3s ease;
-    }
+            <!-- Inventory -->
+            <div>
+                <label for="inventory" class="block text-sm font-medium text-gray-700">Inventory</label>
+                <input type="number" id="inventory" name="inventory" min="1" required
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
+            </div>
 
-    .sidebar ul li a:hover {
-      background-color: #ffcc00;
-      color: #121212;
-    }
+            <!-- Expiry Year -->
+            <div>
+                <label for="expiry_year" class="block text-sm font-medium text-gray-700">Expiry Year</label>
+                <input type="number" id="expiry_year" name="expiry_year" min="2025" required
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
+            </div>
 
-    .toggle-btn {
-      position: absolute;
-      top: 1rem;
-      left: 1rem;
-      z-index: 100;
-      background-color: #ffcc00;
-      color: #121212;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 0.375rem;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
+            <!-- Image Upload -->
+            <div>
+                <label for="image" class="block text-sm font-medium text-gray-700">Product Image</label>
+                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                    <div class="space-y-1 text-center">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <div class="flex text-sm text-gray-600">
+                            <label for="image" class="relative cursor-pointer bg-white rounded-md font-medium text-yellow-500 hover:text-yellow-400 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-yellow-500">
+                                <span>Upload a file</span>
+                                <input id="image" name="image" type="file" class="sr-only" accept="image/*" required>
+                            </label>
+                            <p class="pl-1">or drag and drop</p>
+                        </div>
+                        <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                    </div>
+                </div>
+            </div>
 
-    .toggle-btn:hover {
-      background-color: #e6b800;
-    }
-
-    .form-container {
-      margin: auto;
-      width: 90%;
-      max-width: 600px;
-      background-color: #2a2a2a;
-      padding: 2rem;
-      border-radius: 1rem;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease, opacity 0.3s ease;
-    }
-
-    .form-container:hover {
-      transform: scale(1.02);
-      opacity: 0.95;
-    }
-
-    .form-container h1 {
-      text-align: center;
-      font-size: 1.875rem;
-      font-weight: bold;
-      color: #ffcc00;
-      margin-bottom: 1.5rem;
-    }
-
-    .form-container label {
-      display: block;
-      font-size: 1rem;
-      color: #f8fafc;
-      margin-bottom: 0.5rem;
-    }
-
-    .form-container input[type="text"],
-    .form-container input[type="number"],
-    .form-container input[type="file"] {
-      width: 100%;
-      padding: 0.5rem;
-      border: 1px solid #3d3d3d;
-      border-radius: 0.375rem;
-      background-color: #1e1e1e;
-      color: #f8fafc;
-      margin-bottom: 1rem;
-      transition: box-shadow 0.3s;
-    }
-
-    .form-container input:focus {
-      outline: none;
-      border-color: #ffcc00;
-      box-shadow: 0 0 8px #ffcc00;
-    }
-
-    .form-buttons {
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .form-buttons button {
-      padding: 0.5rem 1.5rem;
-      border-radius: 0.375rem;
-      font-size: 0.875rem;
-      font-weight: 600;
-      transition: background-color 0.3s, transform 0.3s;
-    }
-
-    .form-buttons button:hover {
-      transform: scale(1.05);
-    }
-
-    .form-buttons .btn-success {
-      background-color: #4caf50;
-      color: #f8fafc;
-    }
-
-    .form-buttons .btn-success:hover {
-      background-color: #45a049;
-    }
-
-    .form-buttons .btn-warning {
-      background-color: #ff9800;
-      color: #121212;
-    }
-
-    .form-buttons .btn-warning:hover {
-      background-color: #fb8c00;
-    }
-
-    .link-animation {
-      text-align: center;
-      margin-top: 2rem;
-      color: #ffcc00;
-      text-decoration: underline;
-      cursor: pointer;
-      transition: color 0.3s;
-    }
-
-    .link-animation:hover {
-      color: #ffffff;
-    }
-  </style>
-</head>
-<body>
-  <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-
-  <div class="sidebar" id="sidebar">
-    <ul style="margin-top: 60px;">
-      <li><a href="/index.html">Home</a></li>
-    </ul>
-  </div>
-  
-  <div style="margin-top: 30px; margin-bottom: 30px;" class="form-container">
-    <h1>Add Product</h1>
-    <form action="{{ url_for('add_product') }}" method="POST" enctype="multipart/form-data">
-      <label for="title">Title:</label>
-      <input type="text" id="title" name="title" required>
-
-      <label for="price">Price:</label>
-      <input type="number" id="price" name="price" min="1" step="0.01" required>
-
-      <label for="inventory">Inventory:</label>
-      <input type="number" id="inventory" name="inventory" min="1" required>
-
-      <label for="expiry_year">Expiry Year:</label>
-      <input type="number" id="expiry_year" name="expiry_year" min="2025" required>
-
-      <label for="image">Upload a Picture:</label>
-      <input type="file" id="image" name="image" accept="image/*" required>
-
-      <div class="form-buttons">
-        <button type="submit" class="btn-success">Save</button>
-        <button type="reset" class="btn-warning">Undo</button>
-      </div>
-    </form>
-    <div class="link-animation" onclick="window.location.href='{{ url_for('home') }}'">
-      Back to Home
+            <!-- Submit Button -->
+            <div class="flex justify-end space-x-4">
+                <a href="{{ url_for('home') }}" 
+                   class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-black bg-yellow-500 hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                    Add Product
+                </button>
+            </div>
+        </form>
     </div>
-  </div>
+</div>
 
-  <script>
-    function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      sidebar.classList.toggle('open');
+<script>
+// Preview uploaded image
+document.getElementById('image').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.createElement('img');
+            preview.src = e.target.result;
+            preview.className = 'mt-2 mx-auto h-32 w-32 object-cover rounded-lg';
+            
+            const container = document.querySelector('.space-y-1');
+            const existingPreview = container.querySelector('img');
+            if (existingPreview) {
+                existingPreview.remove();
+            }
+            container.insertBefore(preview, container.firstChild);
+        }
+        reader.readAsDataURL(file);
     }
-  </script>
-</body>
-</html>
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.getElementById('category');
+    const newCategoryInput = document.getElementById('new_category');
+
+    categorySelect.addEventListener('change', function() {
+        if (this.value !== '') {
+            newCategoryInput.value = ''; // Clear new category input if dropdown is used
+        }
+    });
+
+    newCategoryInput.addEventListener('input', function() {
+        if (this.value.trim() !== '') {
+            categorySelect.value = ''; // Clear dropdown if new category is typed
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+{% block title %}Your Cart - BargainBuddy{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    {% if out_of_stock_items %}
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+        <p class="font-bold">Warning: Some items in your cart are out of stock</p>
+        <p class="text-sm">The following items are unavailable and will be excluded from checkout:</p>
+        <ul class="list-disc ml-5 mt-1">
+            {% for item in out_of_stock_items %}
+            <li>{{ item.product.title }} - Requested: {{ item.quantity }}, Available: {{ item.product.inventory }}</li>
+            {% endfor %}
+        </ul>
+        <p class="mt-2">Please remove these items or adjust quantities before proceeding.</p>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Cart Items -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-2xl font-semibold">Shopping Cart</h2>
+                    <p class="text-gray-500">{{ cart.items|length }} items</p>
+                </div>
+
+                {% if cart.items %}
+                    <div class="divide-y divide-gray-200">
+                        {% for item in cart.items %}
+                            {% set is_out_of_stock = item in out_of_stock_items %}
+                            <div class="p-6 flex items-center space-x-4 {% if is_out_of_stock %}bg-red-50{% endif %}" data-item-id="{{ item.id }}">
+                                <img src="{{ url_for('static', filename='uploads/' + (item.product.image_filename or 'default.png')) }}" alt="{{ item.product.title }}" class="w-24 h-24 object-cover rounded-lg {% if is_out_of_stock %}opacity-50{% endif %}">
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-semibold">{{ item.product.title }}</h3>
+                                    {% if is_out_of_stock %}
+                                        <p class="text-red-600 font-semibold">Out of stock! (Available: {{ item.product.inventory }})</p>
+                                    {% endif %}
+                                    {% set negotiated_price = request.args.get('price_' + item.product_id|string, type=float) %}
+                                    <p class="text-gray-500">
+                                        {% if negotiated_price %}
+                                            <span class="line-through text-gray-400">${{ "%.2f"|format(float(item.product.price)) }}</span>
+                                            <span class="text-yellow-500">${{ "%.2f"|format(negotiated_price) }}</span>
+                                        {% else %}
+                                            ${{ "%.2f"|format(float(item.product.price)) }}
+                                        {% endif %}
+                                    </p>
+                                    <p class="text-sm text-gray-500">Stock: {{ item.product.inventory }}</p>
+                                    <div class="flex items-center space-x-4 mt-2">
+                                        <button onclick="updateQuantity('{{ item.id }}', '{{ item.quantity - 1 }}')" 
+                                                class="text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-100">-</button>
+                                        <span class="text-gray-500 quantity">{{ item.quantity }}</span>
+                                        <button onclick="updateQuantity('{{ item.id }}', '{{ item.quantity + 1 }}')" 
+                                                class="text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-100"
+                                                {% if is_out_of_stock or item.product.inventory <= item.quantity %}disabled{% endif %}>+</button>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    {% if negotiated_price %}
+                                        <p class="text-lg font-semibold">${{ "%.2f"|format(negotiated_price * item.quantity) }}</p>
+                                    {% else %}
+                                        <p class="text-lg font-semibold">${{ "%.2f"|format(float(item.product.price) * item.quantity) }}</p>
+                                    {% endif %}
+                                    <button onclick="removeItem('{{ item.id }}')" 
+                                            class="text-red-500 hover:text-red-600 mt-2">Remove</button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="p-6 text-center">
+                        <p class="text-gray-500">Your cart is empty</p>
+                        <a href="{{ url_for('home') }}" class="text-yellow-500 hover:text-yellow-600 mt-2 inline-block">
+                            Continue Shopping
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div>
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden sticky top-24">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-2xl font-semibold">Order Summary</h2>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Subtotal</span>
+                            <span>${{ "%.2f"|format(float(total)) }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Shipping</span>
+                            <span>Free</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Tax (10%)</span>
+                            <span>${{ "%.2f"|format(float(total) * 0.1) }}</span>
+                        </div>
+                        <div class="border-t border-gray-200 pt-4">
+                            <div class="flex justify-between text-lg font-semibold">
+                                <span>Total</span>
+                                <span class="text-yellow-500">${{ "%.2f"|format(float(total) * 1.1) }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="showCheckoutForm()" 
+                            class="w-full bg-yellow-500 text-black py-3 rounded-lg font-medium hover:bg-yellow-400 mt-6 {% if out_of_stock_items %}opacity-50 cursor-not-allowed{% endif %}"
+                            {% if not cart.items or out_of_stock_items %}disabled{% endif %}>
+                        Proceed to Checkout
+                    </button>
+                    
+                    {% if out_of_stock_items %}
+                    <p class="text-red-500 text-sm mt-2 text-center">Please remove out-of-stock items before checkout</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Checkout Form Modal -->
+<div id="checkoutModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white p-6 rounded-lg max-w-lg w-full mx-4">
+        <h3 class="text-xl font-bold mb-4">Shipping Information</h3>
+        <form id="checkoutForm" class="space-y-4">
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                <input type="text" id="name" name="name" required
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
+            </div>
+            <div>
+                <label for="street" class="block text-sm font-medium text-gray-700">Street Address</label>
+                <input type="text" id="street" name="street" required
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="city" class="block text-sm font-medium text-gray-700">City</label>
+                    <input type="text" id="city" name="city" required
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
+                </div>
+                <div>
+                    <label for="state" class="block text-sm font-medium text-gray-700">State</label>
+                    <input type="text" id="state" name="state" required
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="zip" class="block text-sm font-medium text-gray-700">ZIP Code</label>
+                    <input type="text" id="zip" name="zip" required
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
+                </div>
+                <div>
+                    <label for="country" class="block text-sm font-medium text-gray-700">Country</label>
+                    <input type="text" id="country" name="country" required value="United States"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
+                </div>
+            </div>
+            <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                <input type="tel" id="phone" name="phone" required
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
+            </div>
+            <div class="flex justify-end space-x-3 pt-4">
+                <button type="button" onclick="hideCheckoutForm()" 
+                        class="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        class="px-4 py-2 bg-yellow-500 text-black rounded-md hover:bg-yellow-400">
+                    Complete Order
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function updateQuantity(itemId, newQuantity) {
+    // Get the current quantity element
+    const quantityElement = document.querySelector(`[data-item-id="${itemId}"] .quantity`);
+    const currentQuantity = parseInt(quantityElement.textContent);
+    const quantityChange = parseInt(newQuantity) - currentQuantity;
+    
+    // Don't proceed if no change
+    if (quantityChange === 0) return;
+    
+    // Don't allow negative quantities
+    if (currentQuantity + quantityChange < 1) return;
+    
+    fetch('/api/cart/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            item_id: itemId,
+            quantity_change: quantityChange
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Error updating cart');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating cart');
+    });
+}
+
+function removeItem(itemId) {
+    if (!confirm('Are you sure you want to remove this item?')) return;
+    
+    fetch('/api/cart/remove', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            item_id: itemId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Error removing item');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error removing item');
+    });
+}
+
+function showCheckoutForm() {
+    document.getElementById('checkoutModal').classList.remove('hidden');
+}
+
+function hideCheckoutForm() {
+    document.getElementById('checkoutModal').classList.add('hidden');
+}
+
+document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Get form values
+    const name = document.getElementById('name').value;
+    const street = document.getElementById('street').value;
+    const city = document.getElementById('city').value;
+    const state = document.getElementById('state').value;
+    const zip = document.getElementById('zip').value;
+    const country = document.getElementById('country').value;
+    const phone = document.getElementById('phone').value;
+    
+    // Format shipping address
+    const shipping_address = `${name}\n${street}\n${city}, ${state} ${zip}\n${country}\nPhone: ${phone}`;
+    
+    // Show a loading indicator
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Processing...';
+    submitBtn.disabled = true;
+    
+    // Send order request
+    checkout(shipping_address, submitBtn, originalText);
+});
+
+function checkout(shipping_address, submitBtn, originalBtnText) {
+    if (!shipping_address) {
+        alert('Please provide a shipping address');
+        return;
+    }
+    
+    fetch('/api/orders/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            shipping_address: shipping_address
+        })
+    })
+    .then(response => {
+        // Log the raw response for debugging
+        console.log('Response status:', response.status);
+        return response.text().then(text => {
+            console.log('Response text:', text);
+            try {
+                return { status: response.status, data: JSON.parse(text) };
+            } catch (e) {
+                return { status: response.status, data: { error: 'Invalid JSON response' } };
+            }
+        });
+    })
+    .then(({ status, data }) => {
+        console.log('Processed data:', data);
+        if (data.success) {
+            window.location.href = '/orders';
+        } else {
+            // Reset button if available
+            if (submitBtn) {
+                submitBtn.textContent = originalBtnText;
+                submitBtn.disabled = false;
+            }
+            
+            // Hide modal
+            hideCheckoutForm();
+            
+            // Show error
+            let errorMessage = 'Error creating order';
+            if (data.error) {
+                errorMessage = data.error.replace(/\n/g, '<br>');
+            }
+            
+            // Create and show a modal with the error
+            const errorModal = document.createElement('div');
+            errorModal.classList.add('fixed', 'inset-0', 'bg-black', 'bg-opacity-50', 'flex', 'items-center', 'justify-center', 'z-50');
+            errorModal.innerHTML = `
+                <div class="bg-white p-6 rounded-lg max-w-lg w-full mx-4">
+                    <h3 class="text-xl font-bold text-red-600 mb-4">Checkout Failed</h3>
+                    <div class="text-gray-700 mb-6">${errorMessage}</div>
+                    <div class="flex justify-end">
+                        <button class="bg-yellow-500 text-black px-4 py-2 rounded" onclick="this.parentElement.parentElement.parentElement.remove()">Close</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(errorModal);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error creating order. Please try again.');
+        
+        // Reset button if available
+        if (submitBtn) {
+            submitBtn.textContent = originalBtnText;
+            submitBtn.disabled = false;
+        }
+        
+        // Hide modal
+        hideCheckoutForm();
+    });
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}Bargain with AI | BargainBuddy{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">Bargain with AI</h1>
+
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <!-- Chat Header -->
+        <div class="bg-yellow-500 p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <img src="{{ url_for('static', filename='uploads/' + (product.image_filename or 'default.png')) }}" 
+                         alt="{{ product.title }}" 
+                         class="w-12 h-12 rounded-lg object-cover">
+                    <div>
+                        <h2 class="text-lg font-semibold text-black">{{ product.title }}</h2>
+                        <p class="text-sm text-black/80">Current Price: ${{ '%.2f'|format(product.price) }}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-black/80">Max Discount: ${{ '%.2f'|format(product.max_discount) }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Messages -->
+        <div id="chatMessages" class="h-96 overflow-y-auto p-4 space-y-4">
+            <div class="flex items-start space-x-3">
+                <div class="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0">
+                    <span class="text-black font-bold">AI</span>
+                </div>
+                <div class="bg-gray-100 rounded-lg p-3 max-w-[80%]">
+                    <p>Hello! I'm your bargaining assistant. I can help you negotiate a better price for this product. What price would you like to offer?</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Input -->
+        <div class="border-t p-4">
+            <form id="bargainForm" class="flex space-x-4">
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <input type="hidden" name="max_discount" value="{{ product.max_discount }}">
+                <div class="flex-1">
+                    <input type="number" 
+                           name="offered_price" 
+                           step="0.01" 
+                           min="{{ product.price - product.max_discount }}"
+                           max="{{ product.price }}"
+                           placeholder="Enter your offer..."
+                           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                </div>
+                <button type="submit" 
+                        class="bg-yellow-500 text-black px-6 py-2 rounded-lg font-semibold hover:bg-yellow-400">
+                    Send Offer
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bargaining Tips -->
+    <div class="mt-8 bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold mb-4">Bargaining Tips</h3>
+        <ul class="space-y-2 text-gray-600">
+            <li>• Start with a reasonable offer, typically 10-15% below the current price</li>
+            <li>• Consider the product's condition and market value</li>
+            <li>• Be polite and professional in your negotiation</li>
+            <li>• The AI will consider factors like inventory and expiry date</li>
+            <li>• You can make multiple offers until you reach an agreement</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+const chatMessages = document.getElementById('chatMessages');
+const bargainForm = document.getElementById('bargainForm');
+
+function addMessage(message, isAI = false) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'flex items-start space-x-3';
+    
+    const avatar = document.createElement('div');
+    avatar.className = `w-8 h-8 rounded-full ${isAI ? 'bg-yellow-500' : 'bg-gray-500'} flex items-center justify-center flex-shrink-0`;
+    avatar.innerHTML = `<span class="text-black font-bold">${isAI ? 'AI' : 'You'}</span>`;
+    
+    const content = document.createElement('div');
+    content.className = 'bg-gray-100 rounded-lg p-3 max-w-[80%]';
+    content.innerHTML = `<p>${message}</p>`;
+    
+    messageDiv.appendChild(avatar);
+    messageDiv.appendChild(content);
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+bargainForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const offeredPrice = parseFloat(formData.get('offered_price'));
+    const currentPrice = {{ product.price }};
+    const maxDiscount = {{ product.max_discount }};
+    
+    // Add user's offer to chat
+    addMessage(`I offer $${offeredPrice.toFixed(2)} for this product.`);
+    
+    // Calculate discount
+    const discount = currentPrice - offeredPrice;
+    
+    // AI response logic
+    let response;
+    if (discount <= 0) {
+        response = "I'm sorry, but that's not a valid offer. Please make an offer below the current price.";
+    } else if (discount > maxDiscount) {
+        response = `I'm sorry, but I can't accept that offer. The maximum discount I can offer is $${maxDiscount.toFixed(2)}.`;
+    } else {
+        // Calculate acceptance probability based on discount
+        const acceptanceProbability = 1 - (discount / maxDiscount);
+        const isAccepted = Math.random() < acceptanceProbability;
+        
+        if (isAccepted) {
+            response = `Great! I accept your offer of $${offeredPrice.toFixed(2)}. Would you like to proceed with the purchase?`;
+            // Add a purchase button
+            const purchaseButton = document.createElement('button');
+            purchaseButton.className = 'mt-4 bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-400';
+            purchaseButton.textContent = 'Purchase Now';
+            purchaseButton.onclick = function() {
+                window.location.href = `/product/{{ product.id }}?price=${offeredPrice}`;
+            };
+            chatMessages.lastElementChild.lastElementChild.appendChild(purchaseButton);
+        } else {
+            const counterOffer = currentPrice - (maxDiscount * 0.7);
+            response = `I can't accept that offer, but I can offer you $${counterOffer.toFixed(2)}. Would you like to accept this counter-offer?`;
+        }
+    }
+    
+    // Add AI's response to chat
+    setTimeout(() => addMessage(response, true), 1000);
+});
+</script>
+{% endblock %} 

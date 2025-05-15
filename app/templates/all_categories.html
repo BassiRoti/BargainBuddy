@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">All Categories</h1>
+        <p class="text-xl text-gray-600">Browse our complete collection by category</p>
+    </div>
+
+    <!-- Categories Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for category in categories %}
+        <a href="{{ url_for('category_products', category=category) }}" 
+           class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 group">
+            <div class="p-8">
+                <div class="flex items-center space-x-4 mb-6">
+                    <div class="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center">
+                        {% if category == 'Electronics' %}
+                            <i class="fas fa-laptop text-3xl text-yellow-600"></i>
+                        {% elif category == 'Fashion' %}
+                            <i class="fas fa-tshirt text-3xl text-yellow-600"></i>
+                        {% elif category == 'Home & Living' %}
+                            <i class="fas fa-home text-3xl text-yellow-600"></i>
+                        {% elif category == 'Gaming' %}
+                            <i class="fas fa-gamepad text-3xl text-yellow-600"></i>
+                        {% else %}
+                            <i class="fas fa-box text-3xl text-yellow-600"></i>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-1">{{ category }}</h2>
+                        <p class="text-gray-500">{{ category_counts[category] }} Products</p>
+                    </div>
+                </div>
+
+                <!-- Category Stats -->
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500">Price Range</p>
+                        <p class="text-lg font-semibold text-gray-900">
+                            ${{ '%.2f'|format(category_stats[category]['min_price']) }} - ${{ '%.2f'|format(category_stats[category]['max_price']) }}
+                        </p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-500">Available Items</p>
+                        <p class="text-lg font-semibold text-gray-900">{{ category_stats[category]['total_inventory'] }}</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-yellow-600 group-hover:text-yellow-700">Browse Products</span>
+                    <i class="fas fa-arrow-right text-yellow-500 transform group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

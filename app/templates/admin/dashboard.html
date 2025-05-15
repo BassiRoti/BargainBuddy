@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard - BargainBuddy{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Total Products</h3>
+            <p class="text-3xl font-bold text-yellow-500">{{ total_products }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Total Orders</h3>
+            <p class="text-3xl font-bold text-yellow-500">{{ total_orders }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Total Users</h3>
+            <p class="text-3xl font-bold text-yellow-500">{{ total_users }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Total Revenue</h3>
+            <p class="text-3xl font-bold text-yellow-500">${{ '%.2f'|format(total_revenue) }}</p>
+        </div>
+    </div>
+
+    <!-- Product Management -->
+    <div class="bg-white rounded-xl shadow-lg mb-8">
+        <div class="p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Site Management</h2>
+            <div class="flex flex-wrap gap-4">
+                <a href="{{ url_for('admin_products') }}" 
+                   class="bg-yellow-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-yellow-600 transition-colors">
+                    Manage All Products
+                </a>
+                <a href="{{ url_for('add_product') }}" 
+                   class="bg-green-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-600 transition-colors">
+                    Add New Product
+                </a>
+                <a href="{{ url_for('admin_orders') }}" 
+                   class="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors">
+                    Manage Orders
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Navigation -->
+    <div class="bg-white rounded-xl shadow-lg mb-8">
+        <div class="p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Product Categories</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {% for category in categories %}
+                <a href="{{ url_for('admin_category_products', category=category) }}" 
+                   class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-yellow-50 transition-colors">
+                    <span class="font-medium text-gray-700">{{ category }}</span>
+                    <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                        {{ category_counts[category] }}
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Orders -->
+    <div class="bg-white rounded-xl shadow-lg mb-8">
+        <div class="p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Recent Orders</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for order in recent_orders %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{{ order.id }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ order.user.name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${{ '%.2f'|format(order.total_amount) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if order.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                    {% elif order.status == 'processing' %}bg-blue-100 text-blue-800
+                                    {% elif order.status == 'shipped' %}bg-purple-100 text-purple-800
+                                    {% elif order.status == 'delivered' %}bg-green-100 text-green-800
+                                    {% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ order.status|title }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ order.created_at.strftime('%Y-%m-%d %H:%M') }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Products -->
+    <div class="bg-white rounded-xl shadow-lg">
+        <div class="p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Low Stock Products</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for product in low_stock_products %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="h-10 w-10 flex-shrink-0">
+                                        <img class="h-10 w-10 rounded-full object-cover" 
+                                             src="{{ product.image_url }}" 
+                                             alt="{{ product.title }}">
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">{{ product.title }}</div>
+                                        <div class="text-sm text-gray-500">${{ '%.2f'|format(product.price) }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ product.category }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                    {{ product.inventory }} left
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <a href="#" onclick="editProduct({{ product.id }})" class="text-yellow-600 hover:text-yellow-900">Update Stock</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

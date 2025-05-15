@@ -1,5 +1,20 @@
+import os
+
 class Config:
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://bargainbuddy:BargainBuddy@localhost:3307/bargainbuddy'
+    # Database
+    SQLALCHEMY_DATABASE_URI = 'mysql://bargainbuddy:BargainBuddy@localhost:3307/bargainbuddy'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SECRET_KEY = '032491965ed2fb14f94a2d6084ccb218'
+    
+    # Security
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-key-please-change-in-production'
+    
+    # File Upload
+    UPLOAD_FOLDER = os.path.join('app', 'static', 'uploads')
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    
+    # Session
+    PERMANENT_SESSION_LIFETIME = 3600  # 1 hour
+    
+    # Debug
+    DEBUG = True

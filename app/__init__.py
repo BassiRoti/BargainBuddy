@@ -2,8 +2,10 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import os
 from flask_login import LoginManager
+from flask_migrate import Migrate
 
 db = SQLAlchemy()
+migrate = Migrate()
 
 def create_app():
     app = Flask(__name__, template_folder="templates")
@@ -13,6 +15,7 @@ def create_app():
 
     # Initialize database
     db.init_app(app)
+    migrate.init_app(app, db)
 
     from app.models import User 
 
@@ -26,10 +29,6 @@ def create_app():
     # Import routes
     from app.routes import init_routes
     init_routes(app)
-
-    # Create database tables if they don't exist
-    with app.app_context():
-        db.create_all()
 
     # File upload configuration
     UPLOAD_FOLDER = os.path.join('app', 'static','uploads')

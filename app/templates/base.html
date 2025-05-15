@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}BargainBuddy{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    @layer components {
+      .nav-dropdown:hover .dropdown-menu {
+        display: block;
+      }
+      .dropdown-menu {
+        display: none;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: white;
+        min-width: 480px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border-radius: 1rem;
+        z-index: 50;
+        margin-top: 1rem;
+        padding: 1.5rem;
+        animation: dropdownFade 0.2s ease-out;
+      }
+      @keyframes dropdownFade {
+        from {
+          opacity: 0;
+          transform: translateX(-50%) translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+      }
+      .dropdown-menu.show {
+        display: block;
+      }
+      .dropdown-menu::before {
+        content: '';
+        position: absolute;
+        top: -6px;
+        left: 50%;
+        transform: translateX(-50%) rotate(45deg);
+        width: 12px;
+        height: 12px;
+        background-color: white;
+        border-left: 1px solid #e5e7eb;
+        border-top: 1px solid #e5e7eb;
+      }
+      .category-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+      }
+      .category-item {
+        padding: 1rem;
+        border-radius: 0.75rem;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+      }
+      .category-item:hover {
+        background-color: #fef3c7;
+        border-color: #fcd34d;
+      }
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen bg-gray-50 flex flex-col">
+  {% if not hide_nav %}
+    <!-- Top Bar -->
+    <div class="bg-yellow-500 text-black py-2">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center space-x-4 text-sm">
+            <span><i class="fas fa-truck mr-1"></i> Free shipping on orders over $50</span>
+            <span><i class="fas fa-phone-alt mr-1"></i> Customer support: (555) 123-4567</span>
+          </div>
+          <div class="flex items-center space-x-4 text-sm">
+            {% if current_user.is_authenticated %}
+              <span>Welcome, {{ current_user.name }}</span>
+              <a href="{{ url_for('logout') }}" class="hover:underline">Logout</a>
+            {% else %}
+              <a href="{{ url_for('login') }}" class="hover:underline">Login</a>
+              <a href="{{ url_for('register') }}" class="hover:underline">Register</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <!-- Left side -->
+          <div class="flex items-center">
+            <!-- Logo -->
+            <a href="{{ url_for('home') }}" class="flex-shrink-0 flex items-center">
+              <span class="text-2xl font-bold"><span class="text-yellow-500">Bargain</span>Buddy</span>
+            </a>
+
+            {% if not (current_user.is_authenticated and current_user.is_admin) %}
+            <!-- Search Bar -->
+            <div class="ml-6 relative flex-grow max-w-2xl">
+              <form action="{{ url_for('home') }}" method="GET" class="w-full">
+                <div class="relative">
+                  <input type="text" 
+                         name="search" 
+                         id="navSearchInput"
+                         placeholder="Search for products..." 
+                         autocomplete="off"
+                         class="w-full border-gray-300 focus:ring-yellow-500 focus:border-yellow-500 block rounded-full pl-10 pr-4 py-2 sm:text-sm">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-gray-400"></i>
+                  </div>
+                  <div id="navSearchSuggestions" class="absolute w-full bg-white mt-1 rounded-lg shadow-lg border border-gray-200 hidden z-10 max-h-96 overflow-y-auto">
+                  </div>
+                </div>
+              </form>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Right side -->
+          <div class="flex items-center space-x-4">
+            {% if not (current_user.is_authenticated and current_user.is_admin) %}
+            <!-- Categories Dropdown -->
+            <div class="relative nav-dropdown">
+              <button class="text-gray-900 hover:text-gray-600 px-3 py-2 rounded-md text-sm font-medium flex items-center">
+                <i class="fas fa-th-large mr-2"></i> Categories
+              </button>
+              <div class="dropdown-menu right-0 mt-2 w-96">
+                <div class="grid grid-cols-2 gap-2">
+                  {% for category in categories %}
+                  <a href="{{ url_for('category_products', category=category) }}" 
+                     class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center mr-3">
+                      {% if category == 'Electronics' %}
+                        <i class="fas fa-laptop text-yellow-600"></i>
+                      {% elif category == 'Fashion' %}
+                        <i class="fas fa-tshirt text-yellow-600"></i>
+                      {% elif category == 'Home & Living' %}
+                        <i class="fas fa-home text-yellow-600"></i>
+                      {% elif category == 'Gaming' %}
+                        <i class="fas fa-gamepad text-yellow-600"></i>
+                      {% else %}
+                        <i class="fas fa-box text-yellow-600"></i>
+                      {% endif %}
+                    </div>
+                    <div>
+                      <div class="font-medium text-gray-900">{{ category }}</div>
+                      <div class="text-sm text-gray-500">{{ category_counts[category] }} items</div>
+                    </div>
+                  </a>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
+            {% if current_user.is_authenticated %}
+              {% if not current_user.is_admin %}
+                <!-- Cart -->
+                <a href="{{ url_for('cart') }}" class="relative group">
+                  <div class="relative p-2 text-gray-900 hover:text-yellow-600 transition-colors">
+                    <i class="fas fa-shopping-cart text-xl"></i>
+                    {% if current_user.cart and current_user.cart.items %}
+                      <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {{ current_user.cart.items|length }}
+                      </span>
+                    {% endif %}
+                  </div>
+                  <div class="absolute right-0 w-64 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 hidden group-hover:block z-20">
+                    <div class="p-4">
+                      <h3 class="text-sm font-medium text-gray-900">Shopping Cart</h3>
+                      {% if current_user.cart and current_user.cart.items %}
+                        <ul class="mt-2 space-y-2">
+                          {% for item in current_user.cart.items[:3] %}
+                            <li class="flex items-center">
+                              <img src="{{ url_for('static', filename='uploads/' + (item.product.image_filename or 'default.png')) }}" 
+                                   alt="{{ item.product.title }}" 
+                                   class="w-10 h-10 object-cover rounded">
+                              <div class="ml-3 flex-1">
+                                <p class="text-sm text-gray-900 truncate">{{ item.product.title }}</p>
+                                <p class="text-xs text-gray-500">Qty: {{ item.quantity }}</p>
+                              </div>
+                            </li>
+                          {% endfor %}
+                        </ul>
+                        {% if current_user.cart.items|length > 3 %}
+                          <p class="mt-2 text-xs text-gray-500 text-center">
+                            And {{ current_user.cart.items|length - 3 }} more items...
+                          </p>
+                        {% endif %}
+                        <a href="{{ url_for('cart') }}" 
+                           class="mt-3 block w-full bg-yellow-500 text-black text-center px-4 py-2 rounded-md text-sm font-medium hover:bg-yellow-600 transition-colors">
+                          View Cart
+                        </a>
+                      {% else %}
+                        <p class="text-sm text-gray-500 mt-2">Your cart is empty</p>
+                      {% endif %}
+                    </div>
+                  </div>
+                </a>
+
+                <!-- Orders -->
+                <a href="{{ url_for('orders') }}" class="p-2 text-gray-900 hover:text-yellow-600 transition-colors">
+                  <i class="fas fa-box text-xl"></i>
+                </a>
+              {% else %}
+                <!-- Admin Dashboard -->
+                <a href="{{ url_for('admin_dashboard') }}" class="p-2 text-gray-900 hover:text-yellow-600 transition-colors">
+                  <i class="fas fa-chart-line text-xl"></i>
+                </a>
+              {% endif %}
+
+              <!-- User Menu -->
+              <div class="relative nav-dropdown ml-3">
+                <button class="flex items-center text-gray-900 hover:text-gray-600 transition-colors">
+                  <span class="h-8 w-8 rounded-full bg-yellow-200 flex items-center justify-center">
+                    <span class="text-sm font-medium text-yellow-800">
+                      {{ current_user.name[:1].upper() }}
+                    </span>
+                  </span>
+                </button>
+                <div class="dropdown-menu right-0 mt-2 w-48">
+                  <div class="py-1">
+                    <div class="px-4 py-2 text-sm text-gray-900">
+                      {{ current_user.name }}
+                    </div>
+                    <hr class="my-1">
+                    <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                      <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                    </a>
+                  </div>
+                </div>
+              </div>
+            {% else %}
+              <a href="{{ url_for('login') }}" class="text-gray-900 hover:text-yellow-600 px-3 py-2 rounded-md text-sm font-medium">
+                Login
+              </a>
+              <a href="{{ url_for('register') }}" class="bg-yellow-500 text-black hover:bg-yellow-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                Register
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Search Modal -->
+    <div id="searchModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-medium">Search Products</h3>
+          <button onclick="closeSearchModal()" class="text-gray-400 hover:text-gray-500">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <form id="searchForm" action="{{ url_for('home') }}" method="GET" class="mb-4">
+          <div class="relative">
+            <div class="flex space-x-2">
+              <div class="flex-1 relative">
+                <input type="text" 
+                       name="search" 
+                       id="searchInput"
+                       placeholder="Search for products..." 
+                       autocomplete="off"
+                       class="w-full border-gray-300 focus:ring-yellow-500 focus:border-yellow-500 block rounded-md sm:text-sm border px-4 py-3">
+                <div id="searchSuggestions" class="absolute w-full bg-white mt-1 rounded-md shadow-lg border border-gray-200 hidden z-10 max-h-96 overflow-y-auto">
+                </div>
+              </div>
+              <select name="sort" class="border-gray-300 rounded-md text-sm focus:ring-yellow-500 focus:border-yellow-500">
+                <option value="relevance">Sort by Relevance</option>
+                <option value="newest">Newest First</option>
+                <option value="price_low">Price: Low to High</option>
+                <option value="price_high">Price: High to Low</option>
+              </select>
+              <button type="submit" class="bg-yellow-500 text-black px-6 py-3 rounded-md hover:bg-yellow-600 flex items-center">
+                <i class="fas fa-search mr-2"></i> Search
+              </button>
+            </div>
+          </div>
+        </form>
+        
+        <!-- Quick Categories -->
+        <div>
+          <h4 class="text-sm font-medium text-gray-700 mb-2">Popular Categories:</h4>
+          <div class="flex flex-wrap gap-2">
+            {% for category in categories[:6] %}
+            <a href="{{ url_for('category_products', category=category) }}" 
+               class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800 hover:bg-gray-200">
+              {{ category }}
+              <span class="ml-1 text-xs text-gray-500">({{ category_counts[category] }})</span>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+          {% for category, message in messages %}
+            <div class="rounded-md p-4 mb-4 {% if category == 'error' %}bg-red-50 text-red-800{% elif category == 'success' %}bg-green-50 text-green-800{% else %}bg-blue-50 text-blue-800{% endif %}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+  {% endif %}
+
+  <!-- Main Content -->
+  <main class="flex-grow">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% if not hide_nav %}
+    <!-- Newsletter -->
+    <section class="bg-yellow-500 py-10">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row items-center justify-between">
+          <div class="mb-6 md:mb-0">
+            <h3 class="text-2xl font-bold text-black mb-2">Subscribe to our newsletter</h3>
+            <p class="text-black opacity-75">Get the latest deals and special offers</p>
+          </div>
+          <div class="w-full md:w-1/3">
+            <form class="flex">
+              <input type="email" placeholder="Your email address" class="flex-grow px-4 py-2 rounded-l-lg focus:outline-none">
+              <button type="submit" class="bg-black text-white px-6 py-2 rounded-r-lg font-medium">Subscribe</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div>
+          <h3 class="text-xl font-bold mb-4">BargainBuddy</h3>
+          <p class="text-gray-400 mb-4">Your one-stop shop for the best deals and discounts on a wide range of products.</p>
+          <div class="flex space-x-4">
+            <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-pinterest"></i></a>
+          </div>
+        </div>
+        
+        <div>
+          <h4 class="text-lg font-semibold mb-4">Shop</h4>
+          <ul class="space-y-2">
+            <li><a href="{{ url_for('home') }}" class="text-gray-400 hover:text-white">Home</a></li>
+            {% if not (current_user.is_authenticated and current_user.is_admin) %}
+            <li><a href="{{ url_for('all_categories') }}" class="text-gray-400 hover:text-white">All Categories</a></li>
+            {% endif %}
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-lg font-semibold mb-4">My Account</h4>
+          <ul class="space-y-2">
+            {% if current_user.is_authenticated %}
+              {% if current_user.is_admin %}
+                <li><a href="{{ url_for('admin_dashboard') }}" class="text-gray-400 hover:text-white">Admin Dashboard</a></li>
+                <li><a href="{{ url_for('admin_products') }}" class="text-gray-400 hover:text-white">Manage Products</a></li>
+                <li><a href="{{ url_for('admin_orders') }}" class="text-gray-400 hover:text-white">Manage Orders</a></li>
+                <li><a href="{{ url_for('add_product') }}" class="text-gray-400 hover:text-white">Add New Product</a></li>
+              {% else %}
+                <li><a href="{{ url_for('cart') }}" class="text-gray-400 hover:text-white">My Cart</a></li>
+                <li><a href="{{ url_for('orders') }}" class="text-gray-400 hover:text-white">My Orders</a></li>
+              {% endif %}
+              <li><a href="{{ url_for('logout') }}" class="text-gray-400 hover:text-white">Logout</a></li>
+            {% else %}
+              <li><a href="{{ url_for('login') }}" class="text-gray-400 hover:text-white">Login</a></li>
+              <li><a href="{{ url_for('register') }}" class="text-gray-400 hover:text-white">Register</a></li>
+              <li><a href="{{ url_for('seller_login') }}" class="text-gray-400 hover:text-white">Seller Login</a></li>
+              <li><a href="{{ url_for('seller_register') }}" class="text-gray-400 hover:text-white">Become a Seller</a></li>
+            {% endif %}
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-lg font-semibold mb-4">Information</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-gray-400 hover:text-white">About Us</a></li> 
+            <li><a href="#" class="text-gray-400 hover:text-white">Contact Us</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white">Privacy Policy</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white">Terms & Conditions</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+        <p class="text-gray-400">&copy; 2024 BargainBuddy. All rights reserved.</p>
+        <div class="mt-4 md:mt-0">
+          <img src="https://cdn.pixabay.com/photo/2021/10/09/23/15/credit-card-6695332_960_720.png" alt="Payment Methods" class="h-6">
+        </div>
+      </div>
+    </div>
+  </footer>
+  
+  {% block extra_scripts %}{% endblock %}
+
+  <script>
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(event) {
+      const dropdowns = document.querySelectorAll('.dropdown-menu');
+      dropdowns.forEach(dropdown => {
+        const dropdownButton = dropdown.previousElementSibling;
+        if (!dropdown.contains(event.target) && !dropdownButton.contains(event.target)) {
+          dropdown.classList.remove('show');
+          const icon = dropdownButton.querySelector('.fa-chevron-down');
+          if (icon) icon.style.transform = 'rotate(0deg)';
+        }
+      });
+    });
+
+    function toggleDropdown(menuId) {
+      const menu = document.getElementById(menuId);
+      const button = menu.previousElementSibling;
+      const icon = button.querySelector('.fa-chevron-down');
+      
+      // Close all other dropdowns first
+      document.querySelectorAll('.dropdown-menu').forEach(dropdown => {
+        if (dropdown.id !== menuId && dropdown.classList.contains('show')) {
+          dropdown.classList.remove('show');
+          const otherIcon = dropdown.previousElementSibling.querySelector('.fa-chevron-down');
+          if (otherIcon) otherIcon.style.transform = 'rotate(0deg)';
+        }
+      });
+      
+      // Toggle current dropdown
+      menu.classList.toggle('show');
+      icon.style.transform = menu.classList.contains('show') ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+
+    // Close dropdowns when pressing escape key
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        document.querySelectorAll('.dropdown-menu').forEach(dropdown => {
+          dropdown.classList.remove('show');
+          const icon = dropdown.previousElementSibling.querySelector('.fa-chevron-down');
+          if (icon) icon.style.transform = 'rotate(0deg)';
+        });
+      }
+    });
+
+    let searchTimeout;
+    const searchInput = document.getElementById('searchInput');
+    const suggestionsContainer = document.getElementById('searchSuggestions');
+    
+    function closeSearchModal() {
+      document.getElementById('searchModal').classList.add('hidden');
+      searchInput.value = '';
+      suggestionsContainer.innerHTML = '';
+      suggestionsContainer.classList.add('hidden');
+    }
+    
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      const query = this.value.trim();
+      
+      if (query.length < 2) {
+        suggestionsContainer.innerHTML = '';
+        suggestionsContainer.classList.add('hidden');
+        return;
+      }
+      
+      searchTimeout = setTimeout(() => {
+        fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}`)
+          .then(response => response.json())
+          .then(suggestions => {
+            suggestionsContainer.innerHTML = '';
+            
+            if (suggestions.length > 0) {
+              suggestions.forEach(suggestion => {
+                const div = document.createElement('div');
+                div.className = 'px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center';
+                
+                const icon = suggestion.type === 'category' ? 'folder' : 'tag';
+                div.innerHTML = `
+                  <i class="fas fa-${icon} text-gray-400 mr-3"></i>
+                  <div>
+                    <div class="text-sm font-medium">${suggestion.title}</div>
+                    <div class="text-xs text-gray-500">${suggestion.category}</div>
+                  </div>
+                `;
+                
+                div.addEventListener('click', () => {
+                  if (suggestion.type === 'category') {
+                    window.location.href = `{{ url_for('home') }}?category=${encodeURIComponent(suggestion.category)}`;
+                  } else {
+                    searchInput.value = suggestion.title;
+                    document.getElementById('searchForm').submit();
+                  }
+                });
+                
+                suggestionsContainer.appendChild(div);
+              });
+              suggestionsContainer.classList.remove('hidden');
+            } else {
+              suggestionsContainer.classList.add('hidden');
+            }
+          });
+      }, 300);
+    });
+    
+    // Close suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!suggestionsContainer.contains(e.target) && e.target !== searchInput) {
+        suggestionsContainer.classList.add('hidden');
+      }
+    });
+    
+    // Handle keyboard navigation
+    searchInput.addEventListener('keydown', function(e) {
+      const suggestions = suggestionsContainer.children;
+      const current = suggestionsContainer.querySelector('.bg-yellow-50');
+      
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        
+        if (!suggestions.length) return;
+        
+        let next;
+        if (!current) {
+          next = e.key === 'ArrowDown' ? suggestions[0] : suggestions[suggestions.length - 1];
+        } else {
+          const currentIndex = Array.from(suggestions).indexOf(current);
+          current.classList.remove('bg-yellow-50');
+          
+          if (e.key === 'ArrowDown') {
+            next = suggestions[currentIndex + 1] || suggestions[0];
+          } else {
+            next = suggestions[currentIndex - 1] || suggestions[suggestions.length - 1];
+          }
+        }
+        
+        next.classList.add('bg-yellow-50');
+        next.scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'Enter' && current) {
+        e.preventDefault();
+        current.click();
+      }
+    });
+
+    // Dynamic search suggestions for navbar search
+    const navSearchInput = document.getElementById('navSearchInput');
+    const navSearchSuggestions = document.getElementById('navSearchSuggestions');
+    let navSearchTimeout;
+
+    navSearchInput.addEventListener('input', function() {
+      clearTimeout(navSearchTimeout);
+      const query = this.value.trim();
+      
+      if (query.length < 2) {
+        navSearchSuggestions.innerHTML = '';
+        navSearchSuggestions.classList.add('hidden');
+        return;
+      }
+      
+      navSearchTimeout = setTimeout(() => {
+        fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}`)
+          .then(response => response.json())
+          .then(suggestions => {
+            navSearchSuggestions.innerHTML = '';
+            
+            if (suggestions.length > 0) {
+              suggestions.forEach(suggestion => {
+                const div = document.createElement('div');
+                div.className = 'px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center';
+                
+                const icon = suggestion.type === 'category' ? 'folder' : 'tag';
+                div.innerHTML = `
+                  <i class="fas fa-${icon} text-gray-400 mr-3"></i>
+                  <div>
+                    <div class="text-sm font-medium">${suggestion.title}</div>
+                    <div class="text-xs text-gray-500">${suggestion.category}</div>
+                  </div>
+                `;
+                
+                div.addEventListener('click', () => {
+                  if (suggestion.type === 'category') {
+                    window.location.href = `{{ url_for('home') }}?category=${encodeURIComponent(suggestion.category)}`;
+                  } else {
+                    navSearchInput.value = suggestion.title;
+                    navSearchInput.form.submit();
+                  }
+                });
+                
+                navSearchSuggestions.appendChild(div);
+              });
+              navSearchSuggestions.classList.remove('hidden');
+            } else {
+              navSearchSuggestions.classList.add('hidden');
+            }
+          });
+      }, 300);
+    });
+
+    // Close search suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!navSearchSuggestions.contains(e.target) && e.target !== navSearchInput) {
+        navSearchSuggestions.classList.add('hidden');
+      }
+    });
+
+    // Handle keyboard navigation for navbar search
+    navSearchInput.addEventListener('keydown', function(e) {
+      const suggestions = navSearchSuggestions.children;
+      const current = navSearchSuggestions.querySelector('.bg-yellow-50');
+      
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        
+        if (!suggestions.length) return;
+        
+        let next;
+        if (!current) {
+          next = e.key === 'ArrowDown' ? suggestions[0] : suggestions[suggestions.length - 1];
+        } else {
+          const currentIndex = Array.from(suggestions).indexOf(current);
+          current.classList.remove('bg-yellow-50');
+          
+          if (e.key === 'ArrowDown') {
+            next = suggestions[currentIndex + 1] || suggestions[0];
+          } else {
+            next = suggestions[currentIndex - 1] || suggestions[suggestions.length - 1];
+          }
+        }
+        
+        next.classList.add('bg-yellow-50');
+        next.scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'Enter' && current) {
+        e.preventDefault();
+        current.click();
+      }
+    });
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html> 
